@@ -2,9 +2,9 @@ const {
     readCsv,
     validateAirportCode,
     validateAircraftCapacity,
-    validateFlightRange,
-    calculateFlightCostPerSeat,
-    calculateFlightIncome,
+    //validateFlightRange,
+    //calculateFlightCostPerSeat,
+    //calculateFlightIncome,
     ProcessData,
     CreateTxtFile,
 } = require('./planning.js');
@@ -40,6 +40,17 @@ describe('Planning Tests', () => {
           expect(Array.isArray(['value'])).toBe(true); //is the return from this function an array
         })
 
+        // validate airport code 
+        test("validate airport code - handles lowercase & empty string", () => {
+          expect(validateAirportCode("kll")).toBe(false);
+          expect(validateAirportCode("")).toBe(false); 
+        })
+
+        // validate aircraft capacity 
+        test("validate aircraft capacity - handles string number - should convert string number into actual number before calc", () => {
+          expect(validateAircraftCapacity('150','12','2','Large narrow body')).toBe(true);
+        })
+  
         test("handles nonexistent and empty file paths", () => {
           expect(ProcessData("./nonexistent.csv")).toBe(null);
           expect(ProcessData("")).toBe(null);

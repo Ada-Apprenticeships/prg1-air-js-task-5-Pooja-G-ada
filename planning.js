@@ -55,20 +55,26 @@ let aeroplanesOjects = aeroplanesData.map(aeroplane => {
 
 // VALIDATE AIRCRAFT CODE
 function validateAirportCode(ukAirport, overseasAirport){
+    if (!ukAirport.length || !overseasAirport) {
+        console.log(`check code - no input`);
+        return false;
+    }
     const overseasAirportObj = airportOjects.find(airport => airport.code === overseasAirport);
-        if (ukAirport !== "MAN" && ukAirport !== "LGW") {
-            console.log(`Invalid airport code: ${ukAirport}`);
-            return false; 
-        } else if (!overseasAirportObj){
-            console.log(`Invalid airport code: ${overseasAirport}`);
-            return false; 
-        }
+    
+    if (ukAirport.toUpperCase() !== "MAN" && ukAirport.toUpperCase() !== "LGW") {
+        console.log(`Invalid airport code: ${ukAirport.toUpperCase()}`);
+        return false; 
+    } else if (!overseasAirportObj){
+        console.log(`Invalid airport code: ${overseasAirport.toUpperCase()}`);
+        return false; 
+    }
+    
     return true; 
 }
 
 // VALIDATE AIRCRAFT CAPACITY
 function validateAircraftCapacity(economySeats, businessSeats, firstClassSeats, typeOfAircraft){
-    const aeroplane = aeroplanesOjects.find(aeroplane => aeroplane.type === typeOfAircraft)
+    const aeroplane = aeroplanesOjects.find(aeroplane => aeroplane.type === typeOfAircraft);
     const aeroplaneEconomyCapacity = aeroplane ? Number(aeroplane.economySeats) : 0;
     const aeroplaneBusinessCapacity = aeroplane ? Number(aeroplane.businessSeats) : 0;
     const aeroplaneFirstclassCapacity = aeroplane ? Number(aeroplane.firstclassSeats) : 0;
@@ -76,19 +82,19 @@ function validateAircraftCapacity(economySeats, businessSeats, firstClassSeats, 
     const totalSeatsBooked = Number(economySeats) + Number(businessSeats) + Number(firstClassSeats);
     const totalSeatCapacity = aeroplaneEconomyCapacity + aeroplaneBusinessCapacity + aeroplaneFirstclassCapacity;
 
-        if (economySeats > aeroplaneEconomyCapacity) {
-            console.log(`Too many economy seats booked (${economySeats} > ${aeroplaneEconomyCapacity})`)
-            return false; 
-        } else if (businessSeats > aeroplaneBusinessCapacity){
-            console.log(`Too many business seats booked (${businessSeats} > ${aeroplaneBusinessCapacity})`)
-            return false; 
-        } else if (firstClassSeats > aeroplaneFirstclassCapacity){
-            console.log(`Too many business seats booked (${firstClassSeats} > ${aeroplaneFirstclassCapacity})`)
-            return false; 
-        } else if (totalSeatsBooked > totalSeatCapacity){
-            console.log(`Too many total seats booked (${totalSeatsBooked} > ${totalSeatCapacity})`)
-            return false; 
-        }
+    if (economySeats > aeroplaneEconomyCapacity) {
+        console.log(`Too many economy seats booked (${economySeats} > ${aeroplaneEconomyCapacity})`)
+        return false; 
+    } else if (businessSeats > aeroplaneBusinessCapacity){
+        console.log(`Too many business seats booked (${businessSeats} > ${aeroplaneBusinessCapacity})`)
+        return false; 
+    } else if (firstClassSeats > aeroplaneFirstclassCapacity){
+        console.log(`Too many business seats booked (${firstClassSeats} > ${aeroplaneFirstclassCapacity})`)
+        return false; 
+    } else if (totalSeatsBooked > totalSeatCapacity){
+        console.log(`Too many total seats booked (${totalSeatsBooked} > ${totalSeatCapacity})`)
+        return false; 
+    }
     
     return true; 
 
@@ -106,11 +112,10 @@ function validateFlightRange(ukAirport, overseasAirport, typeOfAircraft){
     //  get flight range  of the flight type
     const flightRangeKm = aeroplane ? Number(aeroplane.maxFlightRangeKM) : 0;
     
-    // check 
-        if (distanceBetweenAirportsKm > flightRangeKm) {
-            console.log(`Aircraft ${typeOfAircraft} doesn't have the range to fly to ${overseasAirport}`);
-            return false; 
-        }
+    if (distanceBetweenAirportsKm > flightRangeKm) {
+        console.log(`Aircraft ${typeOfAircraft} doesn't have the range to fly to ${overseasAirport}`);
+        return false; 
+    }
     
     return true; 
 }   
@@ -171,7 +176,6 @@ function ProcessData(flight_data_csv){
         let outputTxtArray = [];
 
         // step 2: map through each line of flights data 
-        // & output to be an array of objects - added extra columns of income, cost, profit
         flightsOjects.forEach(flight => {
             // validation of each flight before carrying out the calc. if validation false -> no calculation
             if (!validateAirportCode(flight.ukAirport, flight.overseasAirport)) return;
@@ -191,18 +195,18 @@ function ProcessData(flight_data_csv){
             // step 2c: calculate profit
             let flightProfit = (flightIncome - flightCost).toFixed(2);
 
-            // to print the full_name of the airporst
+            // get the full_name of the airporst
             const ukAirportName = (flight.ukAirport === "MAN") ? "Manchester" : "London Gatwick"
             const overseasAirportName = airportOjects.find(airport => airport.code === flight.overseasAirport).full_name;//find the airport/airport_name based on flight type code
 
             // print in console for client
-            console.log(`£${flightIncome.toLocaleString('en-GB')} (income) - £${flightCost.toLocaleString('en-GB', { maximumSignificantDigits: 3 })} (cost) = £${flightProfit} The flight from ${ukAirportName} (${flight.ukAirport}) to (${flight.overseasAirport}) (${overseasAirportName}) using a ${flight.typeOfAircraft}, with the given seat bookings and prices, would result in a profit of £${flightProfit.toLocaleString('en-GB')}.`);
+            console.log(`£${flightIncome.toLocaleString('en-GB')} (income) - £${flightCost.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} (cost) = £${flightProfit.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} The flight from ${ukAirportName} (${flight.ukAirport}) to (${flight.overseasAirport}) (${overseasAirportName}) using a ${flight.typeOfAircraft}, with the given seat bookings and prices, would result in a profit of £${flightProfit.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}.`);
             console.log(' ')
-            outputTxtArray.push((`£${flightIncome.toLocaleString('en-GB')} (income) - £${flightCost.toLocaleString('en-GB')} (cost) = £${flightProfit} The flight from ${ukAirportName} (${flight.ukAirport}) to (${flight.overseasAirport}) (${overseasAirportName}) using a ${flight.typeOfAircraft}, with the given seat bookings and prices, would result in a profit of £${flightProfit.toLocaleString('en-GB')}.`));
+            
+            // add/push to output Array
+            outputTxtArray.push((`£${flightIncome.toLocaleString('en-GB')} (income) - £${flightCost.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} (cost) = £${flightProfit.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} The flight from ${ukAirportName} (${flight.ukAirport}) to (${flight.overseasAirport}) (${overseasAirportName}) using a ${flight.typeOfAircraft}, with the given seat bookings and prices, would result in a profit of £${flightProfit.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}.`));
         });
 
-        // console.table(outputArray)
-        // console.log(outputTxtArray)
         return outputTxtArray;
 
     } catch (err) { 
@@ -222,12 +226,12 @@ function CreateTxtFile(outputTxtArray){
 // ----------------!CALL FUNCTION TO PROCESS DATA!--------------- 
 // // --TEST VALID FLIGHT DATA--
 const validData = 'valid_flight_data.csv';
-let outputTxtArray = ProcessData(validData)
+let outputTxtArray = ProcessData(validData);
 CreateTxtFile(outputTxtArray);
 
 // --TEST INVALID FLIGHT DATA--
 // const invalidData = 'invalid_flight_data.csv';
-// let outputTxtArray = ProcessData(invalidData)
+// let outputTxtArray = ProcessData(invalidData);
 // CreateTxtFile(outputTxtArray);           
 
 
@@ -236,9 +240,9 @@ module.exports = {
     readCsv,
     validateAirportCode,
     validateAircraftCapacity,
-    validateFlightRange,
-    calculateFlightCostPerSeat,
-    calculateFlightIncome,
+    //validateFlightRange,
+    //calculateFlightCostPerSeat,
+    //calculateFlightIncome,
     ProcessData,
-    CreateTxtFile
+    //CreateTxtFile
  };
