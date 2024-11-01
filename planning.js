@@ -51,35 +51,19 @@ let aeroplanesOjects = aeroplanesData.map(aeroplane => {
     };
 });
 
-// --VALID FLIGHT DATA--
-const flightsData = readCsv('valid_flight_data.csv');
 
-// --INVALID FLIGHT DATA--
-// const flightsData = readCsv('invalid_flight_data.csv');
-
-// process flightsData 2D array into array of objects 
-let flightsOjects = flightsData.map(flight => {
-    return {
-        ukAirport : flight[0], // airport code
-        overseasAirport : flight[1], //airport code
-        typeOfAircraft : flight[2],
-        noOfEconomySeatsBooked : flight[3],
-        noOfBusinessSeatsBooked : flight[4],
-        noOfFirstClassSeatsBooked : flight[5],
-        PriceOfAEconomyClassSeat : flight[6],
-        PriceOfABusinessClassSeat : flight[7],
-        PriceOfAFirstClassSeat : flight[8].match(/\d+/)[0] //invalid_flight_data file has #error comments, filtering out the numbers only
-    };
-});
 
 // ----------------!validate the input data for aircaraft code, aircraft capacity & aircraft range!---------------
 
 // VALIDATE AIRCRAFT CODE
 function validateAirportCode(ukAirport, overseasAirport){
     const overseasAirportObj = airportOjects.find(airport => airport.code === overseasAirport);
-        if ((ukAirport !== "MAN" && ukAirport !== "LGW") || !overseasAirportObj){
+        if (ukAirport !== "MAN" && ukAirport !== "LGW") {
             // throw new Error(`Invalid airport code: ${ukAirport} or ${overseasAirport}`);
-            console.log(`Invalid airport code: ${ukAirport}${overseasAirport}`);
+            console.log(`Invalid airport code: ${ukAirport}`);
+            return false; //validation unsuccessful
+        } else if (!overseasAirportObj){
+            console.log(`Invalid airport code: ${overseasAirport}`);
             return false; //validation unsuccessful
         }
     return true; //validation successful
@@ -167,64 +151,101 @@ function calculateFlightCostPerSeat(ukAirport, overseasAirport, typeOfAircraft){
 }
 
 // ----------------!Output to the screen the details of the flight and the expected profit or loss for each flight.---------------
-try {
-    // step 1: 
-    let outputArray = [];
-    // step 2: map through each line of flights data 
-    // & output to be an array of objects - added extra columns of income, cost, profit
-    flightsOjects.forEach(flight => {
-        // validation of each flight before carrying out the calc. if validation false -> no calculation
-        if (!validateAirportCode(flight.ukAirport, flight.overseasAirport)) return;
-        if (!validateAircraftCapacity(flight.noOfEconomySeatsBooked, flight.noOfBusinessSeatsBooked, flight.noOfFirstClassSeatsBooked, flight.typeOfAircraft)) return;
-        if (!validateFlightRange(flight.ukAirport, flight.overseasAirport, flight.typeOfAircraft)) return; 
-        
-        // step 2a: calculate income of flight
-        let flightIncome = calculateFlightIncome(flight.noOfEconomySeatsBooked, flight.PriceOfAEconomyClassSeat,  
-        flight.noOfBusinessSeatsBooked, flight.PriceOfABusinessClassSeat,  
-        flight.noOfFirstClassSeatsBooked, flight.PriceOfAFirstClassSeat)
-        
-        // step 2b: calculate cost of flight
-        let totalSeatsTaken =  Number(flight.noOfEconomySeatsBooked) + Number(flight.noOfBusinessSeatsBooked) + Number(flight.noOfFirstClassSeatsBooked)
-        let flightCost = (calculateFlightCostPerSeat(flight.ukAirport, flight.overseasAirport, flight.typeOfAircraft)
-            * totalSeatsTaken).toFixed(2);
-        
-        // step 2c: calculate profit
-        let flightProfit = (flightIncome - flightCost).toFixed(2);
+function ProcessData(flight_data_csv){
+    const flightsData = readCsv(flight_data_csv);
+    // console.log(flightsData);
 
-        // to print the full_name of the airporst
-        const ukAirportName = (flight.ukAirport === "MAN") ? "Manchester" : "London Gatwick"
-        const overseasAirportName = airportOjects.find(airport => airport.code === flight.overseasAirport).full_name;//find the airport/airport_name based on flight type code
-
-        // print in console for client
-        console.log(`£${flightIncome} (income) - £${flightCost} (cost) = £${flightProfit} The flight from ${ukAirportName} (${flight.ukAirport}) to (${flight.overseasAirport}) (${overseasAirportName}) using a ${flight.typeOfAircraft}, with the given seat bookings and prices, would result in a profit of £${flightProfit}.`);
-        console.log(' ')
-        // add_push an array of objects to output array.
-        outputArray.push({
-            "flightFromCode": flight.ukAirport, 
-            "flightFromName": ukAirportName, 
-            "flightTo": flight.overseasAirport,
-            "flightToName": overseasAirportName, 
-            "aircraft": flight.typeOfAircraft,    
-            "flightIncome" : flightIncome.toString(),
-            "flightCost" : flightCost.toString(),
-            "flightProfit" : flightProfit.toString()
-        });
+    // process flightsData 2D array into array of objects 
+    let flightsOjects = flightsData.map(flight => {
+        return {
+            ukAirport : flight[0], // airport code
+            overseasAirport : flight[1], //airport code
+            typeOfAircraft : flight[2],
+            noOfEconomySeatsBooked : flight[3],
+            noOfBusinessSeatsBooked : flight[4],
+            noOfFirstClassSeatsBooked : flight[5],
+            PriceOfAEconomyClassSeat : flight[6],
+            PriceOfABusinessClassSeat : flight[7],
+            PriceOfAFirstClassSeat : flight[8].match(/\d+/)[0] //invalid_flight_data file has #error comments, filtering out the numbers only
+        };
     });
 
-    // console.table(outputArray)
-    console.log(outputArray)
-    // return outputArray;
+    try {
+        // step 1: 
+        let outputArray = [];
+        let outputTxtArray = [];
 
-    // pass outputArray as string to create new csv file 
-    const header = Object.keys(outputArray[0]);
-    const arrayForTxtFile = [header, ...outputArray.map(obj => Object.values(obj))];
+        // step 2: map through each line of flights data 
+        // & output to be an array of objects - added extra columns of income, cost, profit
+        flightsOjects.forEach(flight => {
+            // validation of each flight before carrying out the calc. if validation false -> no calculation
+            if (!validateAirportCode(flight.ukAirport, flight.overseasAirport)) return;
+            if (!validateAircraftCapacity(flight.noOfEconomySeatsBooked, flight.noOfBusinessSeatsBooked, flight.noOfFirstClassSeatsBooked, flight.typeOfAircraft)) return;
+            if (!validateFlightRange(flight.ukAirport, flight.overseasAirport, flight.typeOfAircraft)) return; 
+            
+            // step 2a: calculate income of flight
+            let flightIncome = calculateFlightIncome(flight.noOfEconomySeatsBooked, flight.PriceOfAEconomyClassSeat,  
+            flight.noOfBusinessSeatsBooked, flight.PriceOfABusinessClassSeat,  
+            flight.noOfFirstClassSeatsBooked, flight.PriceOfAFirstClassSeat)
+            
+            // step 2b: calculate cost of flight
+            let totalSeatsTaken =  Number(flight.noOfEconomySeatsBooked) + Number(flight.noOfBusinessSeatsBooked) + Number(flight.noOfFirstClassSeatsBooked)
+            let flightCost = (calculateFlightCostPerSeat(flight.ukAirport, flight.overseasAirport, flight.typeOfAircraft)
+                * totalSeatsTaken).toFixed(2);
+            
+            // step 2c: calculate profit
+            let flightProfit = (flightIncome - flightCost).toFixed(2);
 
-    const stringForTxtFile = arrayForTxtFile.join("\n") + "\n"
-    if (fs.existsSync("outdata.csv")) {fs.unlinkSync("outdata.csv")};
-    fs.appendFileSync("outdata.csv", stringForTxtFile)
-    
-} catch (err) { //if an error occurs, code stops executing in the try block & immediately jumps to catch block.  catch block handles error allowing the program to continue smoothly without creaching!!
-    console.error(`Error processing flight: ${err.message}`);
-    return null;
+            // to print the full_name of the airporst
+            const ukAirportName = (flight.ukAirport === "MAN") ? "Manchester" : "London Gatwick"
+            const overseasAirportName = airportOjects.find(airport => airport.code === flight.overseasAirport).full_name;//find the airport/airport_name based on flight type code
+
+            // print in console for client
+            console.log(`£${flightIncome} (income) - £${flightCost} (cost) = £${flightProfit} The flight from ${ukAirportName} (${flight.ukAirport}) to (${flight.overseasAirport}) (${overseasAirportName}) using a ${flight.typeOfAircraft}, with the given seat bookings and prices, would result in a profit of £${flightProfit}.`);
+            console.log(' ')
+            outputTxtArray.push((`£${flightIncome} (income) - £${flightCost} (cost) = £${flightProfit} The flight from ${ukAirportName} (${flight.ukAirport}) to (${flight.overseasAirport}) (${overseasAirportName}) using a ${flight.typeOfAircraft}, with the given seat bookings and prices, would result in a profit of £${flightProfit}.`));
+
+            // add_push an array of objects to output array.
+            outputArray.push({
+                "flightFromCode": flight.ukAirport, 
+                "flightFromName": ukAirportName, 
+                "flightTo": flight.overseasAirport,
+                "flightToName": overseasAirportName, 
+                "aircraft": flight.typeOfAircraft,    
+                "flightIncome" : flightIncome.toString(),
+                "flightCost" : flightCost.toString(),
+                "flightProfit" : flightProfit.toString()
+            });
+        });
+
+        // create .txt file with the. ouputs.
+        const stringForTxtFile = outputTxtArray.join("\n") + "\n"
+        if (fs.existsSync("outdata.txt")) {fs.unlinkSync("outdata.txt")};
+        fs.appendFileSync("outdata.txt", stringForTxtFile)
+        
+        // console.table(outputArray)
+        console.log(outputArray)
+        return outputArray;
+
+        // pass outputArray as string to create new csv file 
+        // const header = Object.keys(outputArray[0]);
+        // const arrayForTxtFile = [header, ...outputArray.map(obj => Object.values(obj))];
+
+    } catch (err) { //if an error occurs, code stops executing in the try block & immediately jumps to catch block.  catch block handles error allowing the program to continue smoothly without creaching!!
+        console.error(`Error processing flight: ${err.message}`);
+        return null;
+    }
 }
 
+// own test 
+// // --VALID FLIGHT DATA--
+// const validData = 'valid_flight_data.csv';
+
+// // ProcessData(validData)
+// ProcessData(validData)
+
+// --INVALID FLIGHT DATA--
+const invalidData = 'invalid_flight_data.csv';
+
+// // ProcessData(validData)
+ProcessData(invalidData)
