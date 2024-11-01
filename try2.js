@@ -23,6 +23,14 @@ function readCsv(filename, delimiter = ',') {
     }
 }
 
+// Usage example
+// const airportsData = readCsv('airports.csv');
+// if (airportsData) {
+//     airportsData.forEach(row => {
+//         console.log(row);
+//         // console.table(row);
+//     });
+// }
 // ----------------!data from CSV files as table!---------------
 // --AIRPORT DATA--
 const airportsData = readCsv('airports.csv');
@@ -67,58 +75,9 @@ let flightsOjects = flightsData.map(flight => {
         noOfFirstClassSeatsBooked : flight[5],
         PriceOfAEconomyClassSeat : flight[6],
         PriceOfABusinessClassSeat : flight[7],
-        PriceOfAFirstClassSeat : flight[8].match(/\d+/)[0] //invalid_flight_data file has #error comments, filtering out the numbers only
+        PriceOfAFirstClassSeat : flight[8]
     };
 });
-
-// VALIDATE AIRCRAFT CODE
-function validateAirportCode(ukAirport, overseasAirport){
-    const overseasAirportObj = airportOjects.find(airport => airport.code === overseasAirport);
-    if ((ukAirport !== "MAN" && ukAirport !== "LGW") || !overseasAirportObj){
-        throw new Error(`Invalid airport code: ${ukAirport} or ${overseasAirport}`);
-    }
-}
-
-// VALIDATE AIRCRAFT CAPACITY
-function validateAircraftCapacity(economySeats, businessSeats, firstClassSeats, typeOfAircraft){
-    // check economy seats 
-    const aeroplane = aeroplanesOjects.find(aeroplane => aeroplane.type === typeOfAircraft)
-    const aeroplaneEconomyCapacity = aeroplane ? Number(aeroplane.economySeats) : 0;
-    const aeroplaneBusinessCapacity = aeroplane ? Number(aeroplane.businessSeats) : 0;
-    const aeroplaneFirstclassCapacity = aeroplane ? Number(aeroplane.firstclassSeats) : 0;
-
-    const totalSeatsBooked = economySeats + businessSeats + firstClassSeats;
-    const totalSeatCapacity = aeroplaneEconomyCapacity + aeroplaneBusinessCapacity + aeroplaneFirstclassCapacity;
-
-    if (economySeats > aeroplaneEconomyCapacity) {
-        console.log(`Too many economy seats booked (${economySeats} > ${aeroplaneEconomyCapacity})`)
-    } else if (businessSeats > aeroplaneBusinessCapacity){
-        console.log(`Too many business seats booked (${businessSeats} > ${aeroplaneBusinessCapacity})`)
-    } else if (firstClassSeats > aeroplaneFirstclassCapacity){
-        console.log(`Too many business seats booked (${firstClassSeats} > ${aeroplaneFirstclassCapacity})`)
-    } else if (totalSeatsBooked > totalSeatCapacity){
-        console.log(`Too many total seats booked (${totalSeatCapacity} > ${totalSeatCapacity})`)
-    }
-}
-
-// VALIDATE FLIGHT RANGE
-function validateFlightRange(ukAirport, overseasAirport, typeOfAircraft){
-    // calculate distance between airprots
-    const distanceBetweenAirportsKm =  airportOjects.filter(airport => airport.code === overseasAirport)  //filter out the airport based on flight overseas Aiport code
-        .map(airport => (ukAirport === "MAN") ? Number(airport.distance_from_MAN) : Number(airport.distance_from_LGW));   //based on ukAirport code select the correct distance either MAN or LGW
-
-    // find aeroplane maxFlightRangeKM
-    const aeroplane = aeroplanesOjects.find(aeroplane => aeroplane.type === typeOfAircraft); //find the aeroplane based on flight type code
-    
-    //  get flight range  of the flight type
-    const flightRangeKm = aeroplane ? Number(aeroplane.maxFlightRangeKM) : 0;
-    
-    // check 
-    if (distanceBetweenAirportsKm > flightRangeKm) {
-        throw new Error(`Aircraft ${typeOfAircraft} doesn't have the range to fly to ${overseasAirport}`);
-    } 
-}   
-
 
 // FUNCTION -1 
 function calculateFlightIncome(economySeats, priceEconomySeat, businessSeats, priceBusinessSeat, firstClassSeats, priceFirstClassSeat){
@@ -127,7 +86,6 @@ function calculateFlightIncome(economySeats, priceEconomySeat, businessSeats, pr
         (businessSeats * priceBusinessSeat) + 
         (firstClassSeats * priceFirstClassSeat));
 };
-
 
 // FUNCTION -2 
 function calculateFlightCostPerSeat(ukAirport, overseasAirport, typeOfAircraft){
@@ -142,12 +100,13 @@ function calculateFlightCostPerSeat(ukAirport, overseasAirport, typeOfAircraft){
     
     //3. calculate cost per seat 
     //  get costPerSeatPer100km of the flight type
-    const costPerSeatPer100km = aeroplane ? Number(aeroplane.runningCostPerSeatPer100km) : 0;   
+    const costPerSeatPer100km = aeroplane ? Number(aeroplane.runningCostPerSeatPer100km) : 0;   //based on ukAirport code select the correct distance either MAN or LGW
     const costPerSeatPounds = ((distanceBetweenAirportsKm / 100) * costPerSeatPer100km).toFixed(2);
 
-    // console.log(`cost per seat for the entire flight : ${costPerSeatPounds}`)
+    console.log(`cost per seat for the entire flight : ${costPerSeatPounds}`)
     return costPerSeatPounds
 }
+
 
 // ----------------!output to the screen the details of the flight and the expected profit or loss for each flight.---------------
 try {
@@ -156,11 +115,6 @@ try {
     // step 2: map through each line of flights data 
     // & output to be an array of objects - added extra columns of income, cost, profit
     flightsOjects.forEach(flight => {
-        // validateAirportCode(flight.ukAirport, flight.overseasAirport)
-        // validateAircraftCapacity(flight.noOfEconomySeatsBooked, flight.noOfBusinessSeatsBooked, flight.noOfFirstClassSeatsBooked, flight.typeOfAircraft)
-        // validateFlightRange(flight.ukAirport, flight.overseasAirport, flight.typeOfAircraft)
-        
-        
         // step 2a: function to calculate income
         let flightIncome = calculateFlightIncome(flight.noOfEconomySeatsBooked, flight.PriceOfAEconomyClassSeat,  
         flight.noOfBusinessSeatsBooked, flight.PriceOfABusinessClassSeat,  
@@ -177,31 +131,20 @@ try {
             * totalSeatsTaken).toFixed(2);
 
         //add cost key-value to flight object
-        flight["flightCost"] = flightcost.toString()
+        flight["flightcost"] = flightcost.toString()
         
         // step 2c: calculate profit
-        let flightProfit = (flightIncome - flightcost).toFixed(2);
+        let flightProfit = flightIncome - flightcost
         flight["flightProfit"] = flightProfit.toString()
     });
 
     console.table(outputArray)
-    // console.log(outputArray)
-    // return outputArray;
-    const header = Object.keys(outputArray[0]);
-    const arrayForTxtFile = [header, ...outputArray.map(obj => Object.values(obj))];
-    console.log(arrayForTxtFile); 
-
-    const stringForTxtFile = arrayForTxtFile.join("\n") + "\n"
-    if (fs.existsSync("outdata.csv")) {fs.unlinkSync("outdata.csv")};
-    fs.appendFileSync("outdata.csv", stringForTxtFile)
+    console.log(outputArray)
+    return outputArray;
     
 } catch (err) { //if an error occurs, code stops executing in the try block & immediately jumps to catch block.  catch block handles error allowing the program to continue smoothly without creaching!!
-    console.error(`Error processing flight: ${err.message}`);
-    // console.error(flightsOjects);
+    console.error("Error reading file:", err.message);
     return null;
 }
 
-// PROCESS OUTPUT ARRAY OF OBJECTS TO 2D ARRAY 
-// const header = Object.keys(outputArray[0]);
 
-// console.log(Object.keys(outputArray[0]));

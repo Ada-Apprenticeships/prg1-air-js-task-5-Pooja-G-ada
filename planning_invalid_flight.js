@@ -67,7 +67,7 @@ let flightsOjects = flightsData.map(flight => {
         noOfFirstClassSeatsBooked : flight[5],
         PriceOfAEconomyClassSeat : flight[6],
         PriceOfABusinessClassSeat : flight[7],
-        PriceOfAFirstClassSeat : flight[8].match(/\d+/)[0] //invalid_flight_data file has #error comments, filtering out the numbers only
+        PriceOfAFirstClassSeat : flight[8].match(/\d+/)[0]
     };
 });
 
@@ -145,7 +145,7 @@ function calculateFlightCostPerSeat(ukAirport, overseasAirport, typeOfAircraft){
     const costPerSeatPer100km = aeroplane ? Number(aeroplane.runningCostPerSeatPer100km) : 0;   
     const costPerSeatPounds = ((distanceBetweenAirportsKm / 100) * costPerSeatPer100km).toFixed(2);
 
-    // console.log(`cost per seat for the entire flight : ${costPerSeatPounds}`)
+    console.log(`cost per seat for the entire flight : ${costPerSeatPounds}`)
     return costPerSeatPounds
 }
 
@@ -156,9 +156,9 @@ try {
     // step 2: map through each line of flights data 
     // & output to be an array of objects - added extra columns of income, cost, profit
     flightsOjects.forEach(flight => {
-        // validateAirportCode(flight.ukAirport, flight.overseasAirport)
-        // validateAircraftCapacity(flight.noOfEconomySeatsBooked, flight.noOfBusinessSeatsBooked, flight.noOfFirstClassSeatsBooked, flight.typeOfAircraft)
-        // validateFlightRange(flight.ukAirport, flight.overseasAirport, flight.typeOfAircraft)
+        validateAirportCode(flight.ukAirport, flight.overseasAirport)
+        validateAircraftCapacity(flight.noOfEconomySeatsBooked, flight.noOfBusinessSeatsBooked, flight.noOfFirstClassSeatsBooked, flight.typeOfAircraft)
+        validateFlightRange(flight.ukAirport, flight.overseasAirport, flight.typeOfAircraft)
         
         
         // step 2a: function to calculate income
@@ -177,7 +177,7 @@ try {
             * totalSeatsTaken).toFixed(2);
 
         //add cost key-value to flight object
-        flight["flightCost"] = flightcost.toString()
+        flight["flightcost"] = flightcost.toString()
         
         // step 2c: calculate profit
         let flightProfit = (flightIncome - flightcost).toFixed(2);
@@ -185,15 +185,8 @@ try {
     });
 
     console.table(outputArray)
-    // console.log(outputArray)
-    // return outputArray;
-    const header = Object.keys(outputArray[0]);
-    const arrayForTxtFile = [header, ...outputArray.map(obj => Object.values(obj))];
-    console.log(arrayForTxtFile); 
-
-    const stringForTxtFile = arrayForTxtFile.join("\n") + "\n"
-    if (fs.existsSync("outdata.csv")) {fs.unlinkSync("outdata.csv")};
-    fs.appendFileSync("outdata.csv", stringForTxtFile)
+    console.log(outputArray)
+    return outputArray;
     
 } catch (err) { //if an error occurs, code stops executing in the try block & immediately jumps to catch block.  catch block handles error allowing the program to continue smoothly without creaching!!
     console.error(`Error processing flight: ${err.message}`);
@@ -201,7 +194,12 @@ try {
     return null;
 }
 
-// PROCESS OUTPUT ARRAY OF OBJECTS TO 2D ARRAY 
-// const header = Object.keys(outputArray[0]);
+// PROCESS OUTPUT ARRAY TO TEXT FILE
+function objectToArrayWithHeader(obj) {
+    const header = Object.keys(obj);
+    const rows = Object.values(obj);
+    return [header, ...rows];
+};
 
-// console.log(Object.keys(outputArray[0]));
+const txtArray = objectToArrayWithHeader(outputArray);
+console.log(txtArray);
