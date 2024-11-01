@@ -51,8 +51,6 @@ let aeroplanesOjects = aeroplanesData.map(aeroplane => {
     };
 });
 
-
-
 // ----------------!validate the input data for aircaraft code, aircraft capacity & aircraft range!---------------
 
 // VALIDATE AIRCRAFT CODE
@@ -119,7 +117,6 @@ function validateFlightRange(ukAirport, overseasAirport, typeOfAircraft){
 
 // ----------------!Functions to help calculate income & cost !---------------
 
-// FUNCTION -1 
 function calculateFlightIncome(economySeats, priceEconomySeat, businessSeats, priceBusinessSeat, firstClassSeats, priceFirstClassSeat){
     // total income per flight from all 3 (economy + business + first class)
     return ((economySeats * priceEconomySeat) + 
@@ -128,7 +125,6 @@ function calculateFlightIncome(economySeats, priceEconomySeat, businessSeats, pr
 };
 
 
-// FUNCTION -2 
 function calculateFlightCostPerSeat(ukAirport, overseasAirport, typeOfAircraft){
     // 1. calculate distance between 2 airports 
     const distanceBetweenAirportsKm =  airportOjects.filter(airport => airport.code === overseasAirport)  //filter out the airport based on flight overseas Aiport code
@@ -146,9 +142,14 @@ function calculateFlightCostPerSeat(ukAirport, overseasAirport, typeOfAircraft){
     return costPerSeatPounds
 }
 
-// ----------------!FUNCTION TO PROCESS OUTPUT to the SCREEN the details of the flight and the expected profit or loss for each flight.---------------
+// ----------------!MAIN FUNCTION TO PROCESS OUTPUT to the SCREEN the details of the flight and the expected profit or loss for each flight.---------------
 function ProcessData(flight_data_csv){
     const flightsData = readCsv(flight_data_csv);
+
+    if (!flightsData || flightsData.length === 0) {
+        console.error("Error: Empty or invalid flight data file.");
+        return null;
+    }
 
     // process flightsData 2D array into array of objects 
     let flightsOjects = flightsData.map(flight => {
@@ -210,6 +211,7 @@ function ProcessData(flight_data_csv){
     }
 }
 
+// ----------------!Function to create .txt file from the processed data !---------------
 function CreateTxtFile(outputTxtArray){
     // create .txt file with the. ouputs.
     const stringForTxtFile = outputTxtArray.join("\n") + "\n"
@@ -220,14 +222,11 @@ function CreateTxtFile(outputTxtArray){
 // ----------------!CALL FUNCTION TO PROCESS DATA!--------------- 
 // // --TEST VALID FLIGHT DATA--
 const validData = 'valid_flight_data.csv';
-
-// // ProcessData(validData)
 let outputTxtArray = ProcessData(validData)
 CreateTxtFile(outputTxtArray);
 
 // --TEST INVALID FLIGHT DATA--
 // const invalidData = 'invalid_flight_data.csv';
-
 // let outputTxtArray = ProcessData(invalidData)
 // CreateTxtFile(outputTxtArray);           
 

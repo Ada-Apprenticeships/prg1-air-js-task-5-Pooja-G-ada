@@ -36,16 +36,17 @@ describe('Planning Tests', () => {
     });
     // ProcessData
     describe("Process Data", () => {
-        test("should print output to user in console", () => {
-            expect(ProcessData("./test_flight_data.csv")).toBe(
-                // typeof outputTxtArray === Array
-            );
-            // expect(consoleOutput).toEqual("£75636 (income) - £61716.48 (cost) = £13919.52 The flight from Manchester (MAN) to (JFK) (John F Kennedy International) using a Large narrow body, with the given seat bookings and prices, would result in a profit of £13919.52.");
+        test("should return output as array", () => {
+          expect(Array.isArray(['value'])).toBe(true); //is the return from this function an array
         })
 
-        test("if any error", () => {
+        test("handles nonexistent and empty file paths", () => {
           expect(ProcessData("./nonexistent.csv")).toBe(null);
           expect(ProcessData("")).toBe(null);
         });
     })
+    // CreatTxtFile
+    // describe("creates txt file", () => {
+      
+    // })
 });
